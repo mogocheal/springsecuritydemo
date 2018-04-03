@@ -1,0 +1,23 @@
+# springsecuritydemo
+springsecuritydemo
+本内容为多次整合：
+内容包括 spring security 数据库动态控制权限(根据url),
+基于spring security 的 ip登录。
+
+在表单登录中，一般使用数据库中配置的用户表，权限表，角色表，权限组表...这取决于你的权限粒度，但本质都是借助了一个持久化存储，维护了用户的角色权限，而后给出一个/login作为登录端点，使用表单提交用户名和密码，而后完成登录后可自由访问受限页面。
+
+在我们的IP登录demo中，也是类似的，使用IP地址作为身份，内存中的一个ConcurrentHashMap维护IP地址和权限的映射，如果在认证时找不到相应的权限，则认为认证失败。
+
+实际上，在表单登录中，用户的IP地址已经被存放在Authentication.getDetails()中了，完全可以只重写一个AuthenticationProvider认证这个IP地址即可，但是，本demo是为了厘清Spring Security内部工作原理而设置，为了设计到更多的类，我完全重写了IP过滤器。
+
+ 设计概述
+
+我们的参考完全是表单认证，表单认证相关的核心流程：
+
+在IP登录的demo中，使用IpAuthenticationProcessingFilter拦截IP登录请求，同样使用ProviderManager作为全局AuthenticationManager接口的实现类，将ProviderManager内部的DaoAuthenticationProvider替换为IpAuthenticationProvider，而UserDetailsService则使用一个ConcurrentHashMap代替。更详细一点的设计：
+
+IpAuthenticationProcessingFilter-->UsernamePasswordAuthenticationFilter
+IpAuthenticationToken-->UsernamePasswordAuthenticationToken
+ProviderManager-->ProviderManager
+IpAuthenticationProvider-->DaoAuthenticationProvider
+ConcurrentHashMap-->UserDetailsService
